@@ -1,0 +1,626 @@
+---
+sidebar: sidebar 
+permalink: get-started/setup_overview.html 
+keywords: set up astra control, astra control license, add cluster, add storage backend, import storage, add bucket 
+summary: Depois de instalar o Astra Control Center, fazer login na IU e alterar sua senha, você deseja configurar uma licença, adicionar clusters, gerenciar storage e adicionar buckets. 
+---
+= Configure o Astra Control Center
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+[role="lead"]
+Depois de instalar o Astra Control Center, fazer login na IU e alterar sua senha, você deseja configurar uma licença, adicionar clusters, gerenciar storage e adicionar buckets.
+
+.Tarefas
+* <<Adicione uma licença para o Astra Control Center>>
+* <<Prepare seu ambiente para gerenciamento de clusters com o Astra Control>>
+* <<Adicionar cluster>>
+* <<Adicionar um back-end de storage>>
+* <<Adicione um balde>>
+
+
+
+
+== Adicione uma licença para o Astra Control Center
+
+Você pode adicionar uma nova licença usando a IU do Astra Control ou https://docs.netapp.com/us-en/astra-automation/index.html["API"^] obter todos os recursos do Astra Control Center. Sem licença, seu uso do Astra Control Center se limita ao gerenciamento de usuários e à adição de novos clusters.
+
+As licenças do Astra Control Center medem recursos de CPU usando unidades de CPU Kubernetes e contam os recursos de CPU atribuídos aos nós de trabalho de todos os clusters gerenciados do Kubernetes. As licenças são baseadas no uso do vCPU. Para obter mais informações sobre como as licenças são calculadas, link:../concepts/licensing.html["Licenciamento"^]consulte .
+
+
+NOTE: Se a instalação aumentar para exceder o número licenciado de unidades de CPU, o Astra Control Center impedirá que você gerencie novas aplicações. É apresentado um alerta quando a capacidade é ultrapassada.
+
+
+NOTE: Para atualizar uma avaliação existente ou uma licença completa, link:../use/update-licenses.html["Atualizar uma licença existente"^]consulte .
+
+.O que você vai precisar
+* Acesso a uma instância recém-instalada do Astra Control Center.
+* Permissões de função de administrador.
+* A link:../concepts/licensing.html["Ficheiro de licença do NetApp"^] (NLF).
+
+
+.Passos
+. Faça login na IU do Astra Control Center.
+. Selecione *conta* > *Licença*.
+. Selecione *Adicionar licença*.
+. Navegue até o arquivo de licença (NLF) que você baixou.
+. Selecione *Adicionar licença*.
+
+
+A página *Account* > *License* exibe as informações da licença, data de validade, número de série da licença, ID da conta e unidades CPU usadas.
+
+
+NOTE: Se você tiver uma licença de avaliação e não estiver enviando dados para o AutoSupport, lembre-se de armazenar o ID da conta para evitar a perda de dados em caso de falha do Centro de Controle Astra.
+
+
+
+== Prepare seu ambiente para gerenciamento de clusters com o Astra Control
+
+Você deve garantir que as seguintes condições de pré-requisito sejam atendidas antes de adicionar um cluster. Você também deve executar verificações de qualificação para garantir que seu cluster esteja pronto para ser adicionado ao Astra Control Center e criar funções para gerenciamento de clusters.
+
+.O que você vai precisar
+* Verifique se os nós de trabalho no cluster estão configurados com os drivers de armazenamento apropriados para que os pods possam interagir com o armazenamento de back-end.
+* Seu ambiente atende ao link:../get-started/requirements.html#operational-environment-requirements["requisitos do ambiente operacional"^]Astra Trident e Astra Control Center.
+* Uma versão do Astra Trident link:../get-started/requirements.html#operational-environment-requirements["Compatível com Astra Control Center"^]instalada:
++
+
+NOTE: Você pode https://docs.netapp.com/us-en/trident/trident-get-started/kubernetes-deploy.html#choose-the-deployment-method["Implante o Astra Trident"^] usar o operador Trident (manualmente ou usando o gráfico Helm) ou `tridentctl`. Antes de instalar ou atualizar o Astra Trident, revise o https://docs.netapp.com/us-en/trident/trident-get-started/requirements.html["interfaces suportadas, backends e configurações de host"^].
+
++
+** *Back-end de storage do Trident configurado*: Pelo menos um back-end de storage do Astra Trident precisa estar https://docs.netapp.com/us-en/trident/trident-get-started/kubernetes-postdeployment.html#step-1-create-a-backend["configurado"^] no cluster.
+** *Classes de armazenamento Trident configuradas*: Pelo menos uma classe de armazenamento Astra Trident deve estar https://docs.netapp.com/us-en/trident/trident-use/manage-stor-class.html["configurado"^] no cluster. Se uma classe de armazenamento padrão estiver configurada, certifique-se de que é a única classe de armazenamento que tem a anotação padrão.
+** *Controlador de volume e classe de snapshot de volume Astra Trident instalado e configurado*: A controladora de volume deve ser https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#deploying-a-volume-snapshot-controller["instalado"^] para que os snapshots possam ser criados no Astra Control. Pelo menos um Astra Trident `VolumeSnapshotClass` foi https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#step-1-set-up-a-volumesnapshotclass["configuração"^] feito por um administrador.
+
+
+* *Kubeconfig acessível*: Você tem acesso ao https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/["cluster kubeconfig"^] que inclui apenas um elemento de contexto.
+* * Credenciais ONTAP*: Você precisa de credenciais ONTAP e um superusuário e ID de usuário definidos no sistema ONTAP de backup para fazer backup e restaurar aplicativos com o Astra Control Center.
++
+Execute os seguintes comandos na linha de comando ONTAP:
+
++
+[listing]
+----
+export-policy rule modify -vserver <storage virtual machine name> -policyname <policy name> -ruleindex 1 -superuser sys
+export-policy rule modify -vserver <storage virtual machine name> -policyname <policy name> -ruleindex 1 -anon 65534
+----
+* *Somente Rancher*: Ao gerenciar clusters de aplicativos em um ambiente Rancher, modifique o contexto padrão do cluster de aplicativos no arquivo kubeconfig fornecido pelo Rancher para usar um contexto de plano de controle em vez do contexto do servidor da API Rancher. Isso reduz a carga no servidor de API Rancher e melhora o desempenho.
+
+
+
+
+=== Execute verificações de qualificação
+
+Execute as seguintes verificações de qualificação para garantir que o cluster esteja pronto para ser adicionado ao Astra Control Center.
+
+.Passos
+. Verifique a versão do Trident.
++
+[source, console]
+----
+kubectl get tridentversions -n trident
+----
++
+Se o Trident existir, você verá uma saída semelhante à seguinte:
+
++
+[listing]
+----
+NAME      VERSION
+trident   22.10.0
+----
++
+Se o Trident não existir, você verá uma saída semelhante à seguinte:
+
++
+[listing]
+----
+error: the server doesn't have a resource type "tridentversions"
+----
++
+
+NOTE: Se o Trident não estiver instalado ou a versão instalada não for a mais recente, você precisará instalar a versão mais recente do Trident antes de continuar. Consulte o https://docs.netapp.com/us-en/trident/trident-get-started/kubernetes-deploy.html["Documentação do Trident"^] para obter instruções.
+
+. Certifique-se de que os pods estão em execução:
++
+[source, console]
+----
+kubectl get pods -n trident
+----
+. Determine se as classes de armazenamento estão usando os drivers Trident suportados. O nome do provisionador deve ser `csi.trident.netapp.io`. Veja o exemplo a seguir:
++
+[source, console]
+----
+kubectl get sc
+----
++
+Resposta da amostra:
+
++
+[listing]
+----
+NAME                  PROVISIONER            RECLAIMPOLICY  VOLUMEBINDINGMODE  ALLOWVOLUMEEXPANSION  AGE
+ontap-gold (default)  csi.trident.netapp.io  Delete         Immediate          true                  5d23h
+----
+
+
+
+
+=== Crie uma função de cluster limitada kubeconfig
+
+Você pode, opcionalmente, criar uma função de administrador limitada para o Astra Control Center. Este não é um procedimento necessário para a configuração do Astra Control Center. Esse procedimento ajuda a criar um kubeconfig separado que limita as permissões do Astra Control nos clusters gerenciados.
+
+.O que você vai precisar
+Certifique-se de que tem o seguinte para o cluster que pretende gerir antes de concluir as etapas do procedimento:
+
+* kubectl v1,23 ou posterior instalado
+* Acesso kubectl ao cluster que você pretende adicionar e gerenciar com o Astra Control Center
++
+
+NOTE: Para esse procedimento, você não precisa de acesso kubectl ao cluster que está executando o Astra Control Center.
+
+* Um kubeconfig ativo para o cluster que pretende gerir com direitos de administrador de cluster para o contexto ativo
+
+
+.Passos
+[%collapsible]
+====
+. Criar uma conta de serviço:
++
+.. Crie um arquivo de conta de serviço `astracontrol-service-account.yaml` chamado .
++
+Ajuste o nome e o namespace conforme necessário. Se as alterações forem feitas aqui, você deve aplicar as mesmas alterações nas etapas a seguir.
+
++
+[source, subs="specialcharacters,quotes"]
+----
+*astracontrol-service-account.yaml*
+----
++
+[source, yaml]
+----
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: astracontrol-service-account
+  namespace: default
+----
+.. Aplique a conta de serviço:
++
+[source, console]
+----
+kubectl apply -f astracontrol-service-account.yaml
+----
+
+
+. Crie uma função de cluster limitada com as permissões mínimas necessárias para que um cluster seja gerenciado pelo Astra Control:
++
+.. Crie um `ClusterRole` arquivo chamado `astra-admin-account.yaml`.
++
+Ajuste o nome e o namespace conforme necessário. Se as alterações forem feitas aqui, você deve aplicar as mesmas alterações nas etapas a seguir.
+
++
+[source, subs="specialcharacters,quotes"]
+----
+*astra-admin-account.yaml*
+----
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: astra-admin-account
+rules:
+
+# Get, List, Create, and Update all resources
+# Necessary to backup and restore all resources in an app
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - create
+  - patch
+
+# Delete Resources
+# Necessary for in-place restore and AppMirror failover
+- apiGroups:
+  - ""
+  - apps
+  - autoscaling
+  - batch
+  - crd.projectcalico.org
+  - extensions
+  - networking.k8s.io
+  - policy
+  - rbac.authorization.k8s.io
+  - snapshot.storage.k8s.io
+  - trident.netapp.io
+  resources:
+  - configmaps
+  - cronjobs
+  - daemonsets
+  - deployments
+  - horizontalpodautoscalers
+  - ingresses
+  - jobs
+  - namespaces
+  - networkpolicies
+  - persistentvolumeclaims
+  - poddisruptionbudgets
+  - pods
+  - podtemplates
+  - podsecuritypolicies
+  - replicasets
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - rolebindings
+  - roles
+  - secrets
+  - serviceaccounts
+  - services
+  - statefulsets
+  - tridentmirrorrelationships
+  - tridentsnapshotinfos
+  - volumesnapshots
+  - volumesnapshotcontents
+  verbs:
+  - delete
+
+# Watch resources
+# Necessary to monitor progress
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  verbs:
+  - watch
+
+# Update resources
+- apiGroups:
+  - ""
+  - build.openshift.io
+  - image.openshift.io
+  resources:
+  - builds/details
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - imagestreams/layers
+  - imagestreamtags
+  - imagetags
+  verbs:
+  - update
+
+# Use PodSecurityPolicies
+- apiGroups:
+  - extensions
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+----
+.. Aplique a função de cluster:
++
+[source, console]
+----
+kubectl apply -f astra-admin-account.yaml
+----
+
+
+. Crie a vinculação de função de cluster para a função de cluster à conta de serviço:
++
+.. Crie um `ClusterRoleBinding` arquivo chamado `astracontrol-clusterrolebinding.yaml`.
++
+Ajuste quaisquer nomes e namespaces modificados ao criar a conta de serviço conforme necessário.
+
++
+[source, subs="specialcharacters,quotes"]
+----
+*astracontrol-clusterrolebinding.yaml*
+----
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: astracontrol-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: astra-admin-account
+subjects:
+- kind: ServiceAccount
+  name: astracontrol-service-account
+  namespace: default
+----
+.. Aplicar a vinculação de funções do cluster:
++
+[source, console]
+----
+kubectl apply -f astracontrol-clusterrolebinding.yaml
+----
+
+
+. Liste os segredos da conta de serviço, substituindo `<context>` pelo contexto correto para sua instalação:
++
+[source, console]
+----
+kubectl get serviceaccount astracontrol-service-account --context <context> --namespace default -o json
+----
++
+O final da saída deve ser semelhante ao seguinte:
+
++
+[listing]
+----
+"secrets": [
+{ "name": "astracontrol-service-account-dockercfg-vhz87"},
+{ "name": "astracontrol-service-account-token-r59kr"}
+]
+----
++
+Os índices para cada elemento no `secrets` array começam com 0. No exemplo acima, o índice para `astracontrol-service-account-dockercfg-vhz87` seria 0 e o índice para `astracontrol-service-account-token-r59kr` seria 1. Em sua saída, anote o índice do nome da conta de serviço que tem a palavra "token" nele.
+
+. Gere o kubeconfigo da seguinte forma:
++
+.. Crie um `create-kubeconfig.sh` arquivo. Substitua `TOKEN_INDEX` no início do script a seguir pelo valor correto.
++
+[source, subs="specialcharacters,quotes"]
+----
+*create-kubeconfig.sh*
+----
++
+[source, console]
+----
+# Update these to match your environment.
+# Replace TOKEN_INDEX with the correct value
+# from the output in the previous step. If you
+# didn't change anything else above, don't change
+# anything else here.
+
+SERVICE_ACCOUNT_NAME=astracontrol-service-account
+NAMESPACE=default
+NEW_CONTEXT=astracontrol
+KUBECONFIG_FILE='kubeconfig-sa'
+
+CONTEXT=$(kubectl config current-context)
+
+SECRET_NAME=$(kubectl get serviceaccount ${SERVICE_ACCOUNT_NAME} \
+  --context ${CONTEXT} \
+  --namespace ${NAMESPACE} \
+  -o jsonpath='{.secrets[TOKEN_INDEX].name}')
+TOKEN_DATA=$(kubectl get secret ${SECRET_NAME} \
+  --context ${CONTEXT} \
+  --namespace ${NAMESPACE} \
+  -o jsonpath='{.data.token}')
+
+TOKEN=$(echo ${TOKEN_DATA} | base64 -d)
+
+# Create dedicated kubeconfig
+# Create a full copy
+kubectl config view --raw > ${KUBECONFIG_FILE}.full.tmp
+
+# Switch working context to correct context
+kubectl --kubeconfig ${KUBECONFIG_FILE}.full.tmp config use-context ${CONTEXT}
+
+# Minify
+kubectl --kubeconfig ${KUBECONFIG_FILE}.full.tmp \
+  config view --flatten --minify > ${KUBECONFIG_FILE}.tmp
+
+# Rename context
+kubectl config --kubeconfig ${KUBECONFIG_FILE}.tmp \
+  rename-context ${CONTEXT} ${NEW_CONTEXT}
+
+# Create token user
+kubectl config --kubeconfig ${KUBECONFIG_FILE}.tmp \
+  set-credentials ${CONTEXT}-${NAMESPACE}-token-user \
+  --token ${TOKEN}
+
+# Set context to use token user
+kubectl config --kubeconfig ${KUBECONFIG_FILE}.tmp \
+  set-context ${NEW_CONTEXT} --user ${CONTEXT}-${NAMESPACE}-token-user
+
+# Set context to correct namespace
+kubectl config --kubeconfig ${KUBECONFIG_FILE}.tmp \
+  set-context ${NEW_CONTEXT} --namespace ${NAMESPACE}
+
+# Flatten/minify kubeconfig
+kubectl config --kubeconfig ${KUBECONFIG_FILE}.tmp \
+  view --flatten --minify > ${KUBECONFIG_FILE}
+
+# Remove tmp
+rm ${KUBECONFIG_FILE}.full.tmp
+rm ${KUBECONFIG_FILE}.tmp
+----
+.. Forneça os comandos para aplicá-los ao cluster do Kubernetes.
++
+[source, console]
+----
+source create-kubeconfig.sh
+----
+
+
+. (Opcional) Renomear o kubeconfig para um nome significativo para o cluster.
++
+[listing]
+----
+mv kubeconfig-sa YOUR_CLUSTER_NAME_kubeconfig
+----
+
+
+====
+
+
+=== O que se segue?
+
+Agora que você verificou que os pré-requisitos foram atendidos, você está pronto para <<Adicionar cluster,adicione um cluster>>.
+
+
+
+== Adicionar cluster
+
+Para começar a gerenciar suas aplicações, adicione um cluster do Kubernetes e gerencie-o como um recurso de computação. Você precisa adicionar um cluster para Astra Control Center para descobrir suas aplicações Kubernetes.
+
+
+TIP: Recomendamos que o Astra Control Center gerencie o cluster em que ele é implantado primeiro antes de adicionar outros clusters ao Astra Control Center para gerenciar. Ter o cluster inicial sob gerenciamento é necessário enviar dados do Kubemetrics e dados associados ao cluster para métricas e solução de problemas.
+
+.O que você vai precisar
+* Antes de adicionar um cluster, revise e execute o <<Prepare seu ambiente para gerenciamento de clusters com o Astra Control,tarefas pré-requisitos>>necessário .
+
+
+.Passos
+. Navegue pelo menu Dashboard ou clusters:
++
+** Em *Dashboard* no Resumo de recursos, selecione *Add* no painel clusters.
+** Na área de navegação à esquerda, selecione *clusters* e, em seguida, selecione *Adicionar cluster* na página clusters.
+
+
+. Na janela *Add Cluster* que se abre, carregue um `kubeconfig.yaml` ficheiro ou cole o conteúdo de um `kubeconfig.yaml` ficheiro.
++
+
+NOTE: O `kubeconfig.yaml` arquivo deve incluir *somente a credencial de cluster para um cluster*.
+
++
+
+IMPORTANT: Se você criar seu próprio `kubeconfig` arquivo, você deve definir apenas *um* elemento de contexto nele.  https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/["Documentação do Kubernetes"^]Consulte para obter informações sobre a criação `kubeconfig` de ficheiros. Se você criou um kubeconfig para uma função de cluster limitada usando <<Crie uma função de cluster limitada kubeconfig,o processo acima>>o , certifique-se de carregar ou colar esse kubeconfig nesta etapa.
+
+. Forneça um nome de credencial. Por padrão, o nome da credencial é preenchido automaticamente como o nome do cluster.
+. Selecione *seguinte*.
+. Selecione a classe de armazenamento padrão a ser usada para este cluster Kubernetes e selecione *Next*.
++
+
+NOTE: Você deve selecionar uma classe de armazenamento do Trident com o suporte do armazenamento do ONTAP.
+
+. Revise as informações e, se tudo estiver bem, selecione *Adicionar*.
+
+
+.Resultado
+O cluster entra no estado *Descobrindo* e depois muda para *saudável*. Agora você está gerenciando o cluster com Astra Control Center.
+
+
+IMPORTANT: Depois de adicionar um cluster a ser gerenciado no Astra Control Center, talvez demore alguns minutos para implantar o operador de monitoramento. Até então, o ícone de notificação fica vermelho e Registra um evento *Falha na verificação do status do agente de monitoramento*. Você pode ignorar isso, porque o problema resolve quando o Astra Control Center obtém o status correto. Se o problema não resolver em alguns minutos, vá para o cluster e execute `oc get pods -n netapp-monitoring` como ponto de partida. Você precisará examinar os logs do operador de monitoramento para depurar o problema.
+
+
+
+== Adicionar um back-end de storage
+
+Você pode adicionar um back-end de storage do ONTAP existente ao Astra Control Center para gerenciar seus recursos.
+
+O gerenciamento de clusters de storage no Astra Control como um back-end de storage permite que você tenha vínculos entre volumes persistentes (PVS) e o back-end de storage, bem como métricas de storage adicionais.
+
+.Passos
+. No Painel na área de navegação à esquerda, selecione *backends*.
+. Execute um dos seguintes procedimentos:
++
+** *Novos backends*: Selecione *Adicionar* para gerenciar um backend existente, selecione *ONTAP* e *Avançar*.
+** *Backends descobertos*: No menu ações, selecione *Gerenciar* em um back-end descoberto no cluster gerenciado.
+
+
+. Insira o endereço IP e as credenciais de administrador de gerenciamento de cluster do ONTAP. As credenciais devem ser credenciais de todo o cluster.
++
+
+NOTE: O usuário cujas credenciais você inserir aqui deve ter o `ontapi` método de acesso de login de usuário habilitado no Gerenciador de sistema do ONTAP no cluster do ONTAP. Se você planeja usar a replicação do SnapMirror, aplique credenciais de usuário com a função "admin", que tem os métodos de acesso `ontapi` e `http`, nos clusters ONTAP de origem e destino.  https://docs.netapp.com/us-en/ontap-sm-classic/online-help-96-97/concept_cluster_user_accounts.html#users-list["Gerenciar contas de usuário na documentação do ONTAP"^]Consulte para obter mais informações.
+
+. Selecione *seguinte*.
+. Confirme os detalhes do backend e selecione *Manage*.
+
+
+.Resultado
+O backend aparece no `Healthy` estado da lista com informações de resumo.
+
+
+NOTE: Talvez seja necessário atualizar a página para que o backend apareça.
+
+
+
+== Adicione um balde
+
+Você pode adicionar um bucket usando a IU do Astra Control ou https://docs.netapp.com/us-en/astra-automation/index.html["API"^]o . Adicionar fornecedores de bucket do armazenamento de objetos é essencial para fazer backup das aplicações e do storage persistente ou clonar aplicações entre clusters. O Astra Control armazena os backups ou clones nos buckets do armazenamento de objetos que você define.
+
+Você não precisa de um bucket no Astra Control se estiver clonando a configuração da aplicação e o storage persistente para o mesmo cluster. A funcionalidade de instantâneos de aplicações não requer um intervalo.
+
+.O que você vai precisar
+* Um bucket que pode ser acessado a partir dos clusters gerenciados pelo Astra Control Center.
+* Credenciais para o bucket.
+* Um balde dos seguintes tipos:
++
+** NetApp ONTAP S3
+** NetApp StorageGRID S3
+** Microsoft Azure
+** Genérico S3
+
+
+
+
+
+NOTE: A Amazon Web Services (AWS) e o Google Cloud Platform (GCP) usam o tipo de bucket Generic S3.
+
+
+NOTE: Embora o Astra Control Center ofereça suporte ao Amazon S3 como um provedor de bucket do Generic S3, o Astra Control Center pode não oferecer suporte a todos os fornecedores de armazenamento de objetos que claim o suporte ao S3 da Amazon.
+
+.Passos
+. Na área de navegação à esquerda, selecione *Buckets*.
+. Selecione *Adicionar*.
+. Selecione o tipo de balde.
++
+
+NOTE: Quando você adiciona um bucket, selecione o provedor de bucket correto e forneça as credenciais certas para esse provedor. Por exemplo, a IU aceita o NetApp ONTAP S3 como o tipo e aceita credenciais StorageGRID; no entanto, isso fará com que todos os backups e restaurações futuros de aplicativos que usam esse bucket falhem.
+
+. Insira um nome de bucket existente e uma descrição opcional.
++
+
+TIP: O nome e a descrição do bucket aparecem como um local de backup que você pode escolher mais tarde ao criar um backup. O nome também aparece durante a configuração da política de proteção.
+
+. Introduza o nome ou endereço IP do endpoint S3.
+. Em *Selecionar credenciais*, escolha a guia *Adicionar* ou *usar existente*.
++
+** Se você escolheu *Add*:
++
+... Insira um nome para a credencial que a distingue de outras credenciais no Astra Control.
+... Insira a ID de acesso e a chave secreta colando o conteúdo da área de transferência.
+
+
+** Se você escolheu *Use existing*:
++
+... Selecione as credenciais existentes que você deseja usar com o bucket.
+
+
+
+
+.  `Add`Selecione .
++
+
+NOTE: Quando você adiciona um balde, o Astra Control marca um balde com o indicador de balde padrão. O primeiro bucket que você criar se torna o bucket padrão. À medida que você adiciona buckets, você pode decidir mais tarde link:../use/manage-buckets.html#set-the-default-bucket["defina outro intervalo padrão"^].
+
+
+
+
+
+== O que se segue?
+
+Agora que você fez login e adicionou clusters ao Astra Control Center, está pronto para começar a usar os recursos de gerenciamento de dados de aplicações do Astra Control Center.
+
+* link:../use/manage-local-users-and-roles.html["Gerencie usuários e funções locais"]
+* link:../use/manage-apps.html["Comece a gerenciar aplicativos"]
+* link:../use/protection-overview.html["Proteja aplicativos"]
+* link:../use/manage-notifications.html["Gerenciar notificações"]
+* link:../use/monitor-protect.html#connect-to-cloud-insights["Conete-se ao Cloud Insights"]
+* link:../get-started/add-custom-tls-certificate.html["Adicione um certificado TLS personalizado"]
+* link:../use/view-clusters.html#change-the-default-storage-class["Altere a classe de armazenamento padrão"]
+
+
+[discrete]
+== Encontre mais informações
+
+* https://docs.netapp.com/us-en/astra-automation/index.html["Use a API Astra Control"^]
+* link:../release-notes/known-issues.html["Problemas conhecidos"]
+

@@ -1,0 +1,88 @@
+---
+sidebar: sidebar 
+permalink: use/restore-apps.html 
+keywords: restore app, restoring an app, restore an app, restore 
+summary: O Astra pode restaurar a configuração da aplicação e o storage persistente a partir de um snapshot ou backup. Backups de storage persistentes são transferidos do seu armazenamento de objetos, portanto, a restauração a partir de um backup existente será concluída mais rapidamente. 
+---
+= Restaurar aplicações
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/use/
+
+
+[role="lead"]
+O Astra Control pode restaurar sua aplicação a partir de um snapshot ou backup. A restauração a partir de um instantâneo existente será mais rápida ao restaurar o aplicativo para o mesmo cluster. Você pode usar a IU do Astra Control ou https://docs.netapp.com/us-en/astra-automation/index.html["API Astra Control"^] restaurar aplicações.
+
+
+NOTE: Quando você executa uma restauração no local de um aplicativo que usa o armazenamento do NetApp ONTAP, o espaço usado pelo aplicativo restaurado pode dobrar. Depois de executar uma restauração no local, remova todos os snapshots indesejados do aplicativo restaurado para liberar espaço de armazenamento.
+
+.Sobre esta tarefa
+* * Proteja seus aplicativos primeiro*: É altamente recomendável tirar um instantâneo ou fazer backup de seu aplicativo antes de restaurá-lo. Isso permitirá clonar a partir do instantâneo ou backup, caso a restauração não seja bem-sucedida.
+* *Verificar volumes de destino*: Se você restaurar para um cluster diferente, verifique se o cluster está usando o mesmo modo de acesso de volume persistente (por exemplo, ReadWriteMany). A operação de restauração falhará se o modo de acesso ao volume persistente de destino for diferente.
+* *(somente clusters OpenShift) Adicionar políticas*: Quando você cria um projeto para hospedar um aplicativo em um cluster OpenShift, o projeto (ou namespace Kubernetes) recebe um UID SecurityContext. Para ativar o Astra Control Center para proteger seu aplicativo e mover o aplicativo para outro cluster ou projeto no OpenShift, você precisa adicionar políticas que permitam que o aplicativo seja executado como qualquer UID. Como exemplo, os seguintes comandos OpenShift CLI concedem as políticas apropriadas a um aplicativo WordPress.
++
+`oc new-project wordpress`
+`oc adm policy add-scc-to-group anyuid system:serviceaccounts:wordpress`
+`oc adm policy add-scc-to-user privileged -z default -n wordpress`
+
+* *Aplicativos implantados pelo Helm*: Aplicativos de clonagem implantados com o Helm 3 (ou atualizados do Helm 2 para o Helm 3) são totalmente suportados. As aplicações implementadas com o Helm 2 não são suportadas.
+
+
+.Passos
+. Selecione *aplicativos* e, em seguida, selecione o nome de um aplicativo.
+. Selecione *proteção de dados*.
+. Se você quiser restaurar a partir de um instantâneo, mantenha o ícone *Snapshots* selecionado. Caso contrário, selecione o ícone *backups* para restaurar a partir de um backup.
+. No menu Opções na coluna *ações* para o instantâneo ou backup a partir do qual você deseja restaurar, selecione *Restaurar aplicativo*.
+. Escolha o tipo de restauração:
++
+** *Restaurar para namespaces originais*: Use este procedimento para restaurar o aplicativo no local para o cluster original.
++
+[CAUTION]
+====
+Executar uma operação de restauração no local em um aplicativo que compartilhe recursos com outro aplicativo pode ter resultados não desejados. Todos os recursos compartilhados entre os aplicativos são substituídos quando uma restauração no local é executada em um dos aplicativos. Por exemplo, o cenário a seguir cria uma situação indesejável ao usar a replicação do NetApp SnapMirror:
+
+... Você define o aplicativo `app1` usando o namespace `ns1`.
+... Você configura uma relação de replicação para `app1`o .
+... Você define o `app2` aplicativo (no mesmo cluster) usando os namespaces e `ns1` `ns2`.
+... Você configura uma relação de replicação para `app2`o .
+... Inverta a replicação para `app2`o . Isso faz com que o `app1` aplicativo no cluster de origem seja desativado.
+
+
+====
++
+... Selecione o instantâneo a ser usado para restaurar o aplicativo no local, o que reverte o aplicativo para uma versão anterior de si mesmo.
+... Selecione *seguinte*.
++
+
+NOTE: Se você restaurar para um namespace que foi excluído anteriormente, um novo namespace com o mesmo nome será criado como parte do processo de restauração. Todos os usuários que tinham direitos para gerenciar aplicativos no namespace excluído anteriormente precisam restaurar manualmente os direitos para o namespace recém-criado.
+
+... Revise os detalhes sobre a ação de restauração, digite "restaurar" e selecione *Restaurar*.
+
+
+** * Restaurar para novos namespaces*: Use este procedimento para restaurar o aplicativo para outro cluster ou com namespaces diferentes da origem.
++
+... Escolha o cluster de destino para o aplicativo que você pretende restaurar.
+... Insira um namespace de destino para cada namespace de origem associado ao aplicativo.
++
+
+NOTE: O Astra Control cria novos namespaces de destino como parte dessa opção de restauração. Namespaces de destino que você especificar não devem estar presentes no cluster de destino.
+
+... Selecione *seguinte*.
+... Selecione o instantâneo a utilizar para restaurar a aplicação.
+... Selecione *seguinte*.
+... Revise os detalhes sobre a ação de restauração e selecione *Restore*.
+
+
+
+
+
+
+.Resultado
+O Astra Control restaura a aplicação com base nas informações fornecidas. Se você restaurou o aplicativo no local, o conteúdo dos volumes persistentes existentes será substituído pelo conteúdo de volumes persistentes do aplicativo restaurado.
+
+
+NOTE: Após uma operação de proteção de dados (clone, backup ou restauração) e subsequente redimensionamento persistente de volume, há um atraso de até vinte minutos antes que o novo tamanho de volume seja exibido na IU da Web. A operação de proteção de dados é bem-sucedida em minutos. Você pode usar o software de gerenciamento do back-end de storage para confirmar a alteração no tamanho do volume.
+
+
+IMPORTANT: Qualquer usuário membro com restrições de namespace por nome/ID de namespace ou por rótulos de namespace pode clonar ou restaurar um aplicativo para um novo namespace no mesmo cluster ou para qualquer outro cluster na conta da organização. No entanto, o mesmo usuário não pode acessar o aplicativo clonado ou restaurado no novo namespace. Depois que um novo namespace é criado por uma operação de clone ou restauração, o administrador/proprietário da conta pode editar a conta de usuário membro e atualizar as restrições de função para o usuário afetado conceder acesso ao novo namespace.
