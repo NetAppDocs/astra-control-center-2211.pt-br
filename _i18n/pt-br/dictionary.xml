@@ -2660,4 +2660,25 @@
   <block id="f20e69549fc23f9df431f9511f177e5e" category="sidebar">Gerencie sua conta</block>
   <block id="1eda8b1f4dfa35b119f2a579170d4546" category="sidebar">Gerenciar credenciais</block>
   <block id="0adc618a9ad28f57db9328d47cf45165" category="sidebar">Monitore a infraestrutura com o Cloud Insights e o Fluentd</block>
+  <block id="0798c457df65a765c2a3aace627c312b" category="sidebar">Comece a usar o Astra Control Center</block>
+  <block id="fc18f7f9f859a40bdcb0a2a4c2ee5a33" category="sidebar">Novidades do Astra Control Center</block>
+  <block id="62bdbe048d174b559cb770f9ebaf0895" category="sidebar">Experimente</block>
+  <block id="b42200f7280deb01c16bf89a68f5395d" category="sidebar">Use a API REST do Astra Control</block>
+  <block id="76970df80a59418e6dbfba63fb53174b" category="sidebar">Comece a usar a API Astra Control</block>
+  <block id="19ec08da81a826d919d64ab860845c04" category="sidebar">Referência da API</block>
+  <block id="a8cdd583ea359a6ef025304a7be14aeb" category="sidebar">Workflows de API</block>
+  <block id="e8390eba9a3848bb461210a9a06f9684" category="sidebar">Use o Astra Control Service</block>
+  <block id="13c01a54604c3f7049eaa9f3390e1622" category="sidebar">Saiba mais sobre o Astra Control Service</block>
+  <block id="3df43a986689c71190e7e91a132b254a" category="sidebar">Novidades do Astra Control Service</block>
+  <block id="4b73996cc1da59c5ea313bcccd18304b" category="sidebar">Início rápido para Astra Control Service</block>
+  <block id="a862000507b324693be75565a4728c6e" category="sidebar">Briefings de solução</block>
+  <block id="6c982e1027a895243c2e2e4e1675fa74" category="sidebar">PostgreSQL DBaaS com Astra Control</block>
+  <block id="b1cb177a36a717434db632021b6d91bc" category="sidebar">MySQL DBaaS com Astra Control</block>
+  <block id="332153f6f1b31602ac3418cdf4d18170" category="sidebar">Simplifique o gerenciamento do ciclo de vida do Jenkins</block>
+  <block id="813011e2103649bb71f124adedcc10ea" category="sidebar">Blogs &amp; comunidade</block>
+  <block id="a7cfd917113a9ee9c1e789887d1d809f" category="sidebar">Canal discord</block>
+  <block id="36910a95584c53fdc9ed97782ef3965c" category="sidebar">Blog Astra Control</block>
+  <block id="dd490b81914dd945601e442a41cb4222" category="sidebar">Comunidade NetApp</block>
+  <block id="874d8a5301794a9ca2aba132ac2460f3" category="sidebar">Kubernetes Hub</block>
+  <block id="213686afc3803be7caa09348765467fe" category="sidebar">Onde obter ajuda</block>
 </blocks>
